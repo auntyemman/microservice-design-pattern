@@ -1,0 +1,38 @@
+# Example for auth-service (apply same pattern to others)
+FROM node:23-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files first to leverage Docker cache
+COPY package*.json ./
+COPY tsconfig*.json ./
+COPY nest-cli.json ./
+
+# Copy only needed directories
+COPY apps/auth-service ./apps/auth-service
+COPY libs ./libs
+
+# Install dependencies
+RUN npm install
+
+# Build only the required service
+RUN npm run build auth-service
+
+# Production stage
+FROM node:23-alpine
+
+WORKDIR /app
+
+# Copy only production dependencies
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Copy only the built service
+COPY --from=builder /app/dist/apps/auth-service ./dist
+
+# Set environment variables
+ENV NODE_ENV=production
+
+EXPOSE 3001
+
+CMD ["node", "dist/main.js"]

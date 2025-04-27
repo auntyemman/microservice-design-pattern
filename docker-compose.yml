@@ -1,0 +1,210 @@
+
+services:
+  # Databases
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth_service
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # mongodb:
+  #   image: mongo:5.0
+  #   container_name: mongodb
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: mongo
+  #     MONGO_INITDB_ROOT_PASSWORD: mongo
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #     # Add initialization script to create databases for each service
+  #     - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+  #   networks:
+  #     - backend
+  #   healthcheck:
+  #     test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Microservices
+  # api-gateway:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.api-gateway
+  #   container_name: api-gateway
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     NODE_ENV: development
+  #     AUTH_SERVICE_HOST: auth-service
+  #     AUTH_SERVICE_PORT: 3001
+  #     ORDER_SERVICE_HOST: order-service
+  #     ORDER_SERVICE_PORT: 3002
+  #     NOTIFICATION_SERVICE_HOST: notification-service
+  #     NOTIFICATION_SERVICE_PORT: 3003
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USERNAME: guest
+  #     RABBITMQ_PASSWORD: guest
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #   depends_on:
+  #     - auth-service
+  #     - order-service
+  #     - notification-service
+  #   networks:
+  #     - backend
+  #   volumes:
+  #     - ./apps/api-gateway:/app/apps/api-gateway
+  #     - ./libs:/app/libs
+  #     - /app/node_modules
+  #   command: npm run start:dev api-gateway
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.auth-service
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      DATABASE_TYPE: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: auth_service
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - backend
+    volumes:
+      - ./apps/auth-service:/app/apps/auth-service
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:dev auth-service
+
+  # order-service:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.order-service
+  #   container_name: order-service
+  #   ports:
+  #     - "3002:3002"
+  #   environment:
+  #     NODE_ENV: development
+  #     DATABASE_TYPE: mongodb
+  #     MONGODB_URI: mongodb://mongo:mongo@mongodb:27017/order_service
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USERNAME: guest
+  #     RABBITMQ_PASSWORD: guest
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #   depends_on:
+  #     - mongodb
+  #     - rabbitmq
+  #     - redis
+  #   networks:
+  #     - backend
+  #   volumes:
+  #     - ./apps/order-service:/app/apps/order-service
+  #     - ./libs:/app/libs
+  #     - /app/node_modules
+  #   command: npm run start:dev order-service
+
+  # notification-service:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.notification-service
+  #   container_name: notification-service
+  #   ports:
+  #     - "3003:3003"
+  #   environment:
+  #     NODE_ENV: development
+  #     DATABASE_TYPE: mongodb
+  #     MONGODB_URI: mongodb://mongo:mongo@mongodb:27017/notification_service
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USERNAME: guest
+  #     RABBITMQ_PASSWORD: guest
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #   depends_on:
+  #     - mongodb
+  #     - rabbitmq
+  #     - redis
+  #   networks:
+  #     - backend
+  #   volumes:
+  #     - ./apps/notification-service:/app/apps/notification-service
+  #     - ./libs:/app/libs
+  #     - /app/node_modules
+  #   command: npm run start:dev notification-service
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  # mongodb_data:
+  redis_data:
+  rabbitmq_data:
