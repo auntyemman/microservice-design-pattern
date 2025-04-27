@@ -21,11 +21,11 @@ export const RABBITMQ = {
     ORDER_CONFIRMED: 'order_confirmed_queue',
     NOTIFICATION_EMAIL: 'notification_email_queue',
     NOTIFICATION_SMS: 'notification_sms_queue',
-    
+
     // Background job queues
     BACKGROUND_JOBS: 'background_jobs_queue',
     SCHEDULED_TASKS: 'scheduled_tasks_queue',
-    
+
     // Retry queues
     USER_RETRY: 'user_retry_queue',
     ORDER_RETRY: 'order_retry_queue',
@@ -40,11 +40,11 @@ export const RABBITMQ = {
     ORDER_CONFIRMED: 'order.confirmed',
     NOTIFICATION_EMAIL: 'notification.email',
     NOTIFICATION_SMS: 'notification.sms',
-    
+
     // Background job routing keys
     BACKGROUND_JOB: 'job.background',
     SCHEDULED_TASK: 'job.scheduled',
-    
+
     // Retry routing keys
     USER_RETRY: 'retry.user',
     ORDER_RETRY: 'retry.order',
@@ -71,5 +71,3 @@ export const REDIS = {
     ORDERS: 'orders:list',
   },
 };
-
-export const REDIS_CACHE_TTL = 60 * 60 * 1; // 1 hour in seconds

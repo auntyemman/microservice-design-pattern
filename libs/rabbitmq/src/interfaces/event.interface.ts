@@ -1,3 +1,24 @@
+export interface EventPayload {
+  [key: string]: any;
+}
+
+export interface EventMetadata {
+  timestamp: number;
+  correlationId?: string;
+  service: string;
+  retry?: {
+    count: number;
+    maxRetries: number;
+    nextRetryAt: number;
+  };
+}
+
+export interface RabbitMQEvent<T extends EventPayload = EventPayload> {
+  event: string;
+  payload: T;
+  metadata: EventMetadata;
+}
+
 export interface UserCreatedEvent {
   id: string;
   firstName: string;

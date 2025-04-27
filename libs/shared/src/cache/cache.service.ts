@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RedisService } from 'nestjs-redis';
 import Redis from 'ioredis';
-import { REDIS_CACHE_TTL } from '@app/shared/constants';
+import { REDIS } from '@app/shared/constants';
 
 @Injectable()
 export class RedisCacheService {
@@ -26,7 +26,7 @@ export class RedisCacheService {
   async set(
     key: string,
     value: any,
-    ttl: number = REDIS_CACHE_TTL,
+    ttl: number = REDIS.CACHE_TTL,
   ): Promise<void> {
     if (typeof value === 'object') {
       await this.redis.set(key, JSON.stringify(value), 'EX', ttl);

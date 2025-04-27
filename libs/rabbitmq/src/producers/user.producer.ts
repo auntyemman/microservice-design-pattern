@@ -40,7 +40,7 @@ export class UserProducer extends BaseProducer {
       RABBITMQ.EXCHANGES.USER_EVENTS,
       RABBITMQ.ROUTING_KEYS.BACKGROUND_JOB,
       payload,
-      options
+      options,
     );
 
     this.logger.log(`Scheduled background task: ${taskType}`);
@@ -53,11 +53,11 @@ export class UserProducer extends BaseProducer {
   ): Promise<void> {
     // Example of scheduling a long-running task
     await this.scheduleBackgroundTask('BULK_EMAIL', {
-      userIds: users.map(user => user.id),
+      userIds: users.map((user) => user.id),
       emailTemplate,
       data,
     });
-    
+
     this.logger.log(`Scheduled bulk email task for ${users.length} users`);
   }
 }
