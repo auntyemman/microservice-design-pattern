@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RabbitMQConfig } from './interfaces';
+// import { SERVICE_NAMES } from '@app/shared/constants'
 
 @Module({})
 export class RabbitMQModule {
@@ -22,6 +23,12 @@ export class RabbitMQModule {
               persistent: true,
               queueOptions: {
                 durable: true,
+                defaultRpcTimeout: 10000,
+                defaultExchangeType: 'topic',
+                connectionManagerOptions: {
+                  heartbeatIntervalInSeconds: 15,
+                  reconnectTimeInSeconds: 10,
+                },
               },
             },
           },

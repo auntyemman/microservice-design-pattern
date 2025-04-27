@@ -1,5 +1,9 @@
 export * from './event.interface';
 
+export interface RabbitMQModuleOptions {
+  name?: string;
+  config?: any;
+}
 export interface RabbitMQConfig {
   exchanges: {
     [key: string]: {

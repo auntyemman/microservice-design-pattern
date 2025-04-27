@@ -15,7 +15,7 @@ export class RedisCacheService {
   async get<T>(key: string): Promise<T | null> {
     const data = await this.redis.get(key);
     if (!data) return null;
-    
+
     try {
       return JSON.parse(data);
     } catch (error) {
@@ -50,14 +50,14 @@ export class RedisCacheService {
     await this.redis.hset(
       key,
       field,
-      typeof value === 'object' ? JSON.stringify(value) : value
+      typeof value === 'object' ? JSON.stringify(value) : value,
     );
   }
 
   async hashGet<T>(key: string, field: string): Promise<T | null> {
     const data = await this.redis.hget(key, field);
     if (!data) return null;
-    
+
     try {
       return JSON.parse(data);
     } catch (error) {

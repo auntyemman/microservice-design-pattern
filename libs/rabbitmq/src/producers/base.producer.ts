@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 @Injectable()
 export abstract class BaseProducer implements OnModuleInit {
   constructor(
-    @Inject(abstract) private readonly client: ClientProxy,
+    @Inject() private readonly client: ClientProxy,
     private readonly serviceName: string,
   ) {}
 
