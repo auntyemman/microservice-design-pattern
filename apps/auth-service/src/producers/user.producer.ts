@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   BaseProducer,
   RabbitMQService,
@@ -6,39 +6,29 @@ import {
   UserUpdatedEvent,
 } from '@app/rabbitmq';
 import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
-import { ClientProxy } from '@nestjs/microservices';
-import { WorkerService } from '@app/rabbitmq/rabbitmq.worker-service';
 
 @Injectable()
 export class UserProducer extends BaseProducer {
   constructor(
-    // @Inject('RABBITMQ_CLIENT') client: ClientProxy,
     protected readonly rabbitMQService: RabbitMQService,
-    private readonly workerService: WorkerService,
+    // TODO: change worker service to domain specific worker
+    // private readonly workerService: WorkerService,
   ) {
     super(rabbitMQService, SERVICE_NAMES.AUTH_SERVICE);
   }
 
   /**
-   * Emit user created event
+   * Emit user created event through the pub/sub
    */
-  async userCreated(user: UserCreatedEvent): Promise<boolean> {
-    return this.emit(
-      RABBITMQ.EXCHANGES.USER_EVENTS,
-      RABBITMQ.ROUTING_KEYS.USER_CREATED,
-      user,
-    );
+  async userCreated(user: UserCreatedEvent): Promise<void> {
+    return this.emit(RABBITMQ.ROUTING_KEYS.USER_CREATED, user);
   }
 
   /**
-   * Emit user updated event
+   * Emit user updated event through the pub/sub
    */
-  async userUpdated(user: UserUpdatedEvent): Promise<boolean> {
-    return this.emit(
-      RABBITMQ.EXCHANGES.USER_EVENTS,
-      RABBITMQ.ROUTING_KEYS.USER_UPDATED,
-      user,
-    );
+  async userUpdated(user: UserUpdatedEvent): Promise<void> {
+    return this.emit(RABBITMQ.ROUTING_KEYS.USER_UPDATED, user);
   }
 
   /**
@@ -67,16 +57,17 @@ export class UserProducer extends BaseProducer {
       createdAt: new Date().toISOString(),
     };
 
-    await this.workerService.scheduleJob(
-      RABBITMQ.EXCHANGES.USER_EVENTS,
-      RABBITMQ.ROUTING_KEYS.BACKGROUND_JOB,
-      payload,
-      options,
-    );
+    // TODO: make this local to this domain
+    // await this.workerService.scheduleJob(
+    //   RABBITMQ.EXCHANGES.USER_EVENTS,
+    //   RABBITMQ.ROUTING_KEYS.BACKGROUND_JOB,
+    //   payload,
+    //   options,
+    // );
   }
 
   async scheduleBulkEmails(
-    users: User[], //TODO: assign a proper type
+    users: any, // User[], //TODO: assign a proper type
     emailTemplate: string,
     data: any,
   ): Promise<void> {

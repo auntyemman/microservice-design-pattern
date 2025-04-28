@@ -1,4 +1,4 @@
-import { UserCreatedEvent, UserUpdatedEvent } from '../interfaces';
+import { UserCreatedEvent, UserUpdatedEvent } from '@app/rabbitmq/interfaces';
 
 export class UserCreated {
   constructor(public readonly data: UserCreatedEvent) {}

@@ -21,21 +21,24 @@ export class UserCleanupWorker extends BaseWorker<UserCleanupPayload> {
 
   async process(payload: UserCleanupPayload): Promise<void> {
     const { olderThanDays } = payload;
-    
+
     // Calculate the cutoff date
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
-    
-    this.logger.log(`Cleaning up inactive users older than ${olderThanDays} days (before ${cutoffDate})`);
-    
+
+    this.logger.log(
+      `Cleaning up inactive users older than ${olderThanDays} days (before ${cutoffDate})`,
+    );
+
     // Delete inactive users older than the cutoff date
-    const result = await this.userRepository.createQueryBuilder()
+    const result = await this.userRepository
+      .createQueryBuilder()
       .delete()
       .from(User)
       .where('last_login_at < :cutoffDate', { cutoffDate })
       .andWhere('status = :status', { status: 'inactive' })
       .execute();
-    
+
     this.logger.log(`Cleaned up ${result.affected} inactive users`);
   }
 }

@@ -14,25 +14,36 @@ export abstract class BaseProducer implements OnModuleInit {
   }
 
   /**
-   * Emit an event to an exchange with a routing key
+   * Emit an event to an event to the client microservice
    */
-  protected async emit<T extends EventPayload>(
-    exchange: string,
-    routingKey: string,
-    payload: T,
-  ): Promise<boolean> {
-    const event: RabbitMQEvent<T> = {
-      event: routingKey,
-      payload,
-      metadata: {
-        timestamp: Date.now(),
-        correlationId: this.generateCorrelationId(),
-        service: this.serviceName,
-      },
-    };
-
-    return this.rabbitMQService.publish(exchange, routingKey, event);
+  protected async emit<T>(pattern: string, data: T): Promise<void> {
+    return this.rabbitMQService.emit(pattern, data);
   }
+
+  protected async send<T, R>(pattern: string, data: T): Promise<R> {
+    return this.rabbitMQService.send(pattern, data);
+  }
+
+//   /**
+//    * Emit an event to an exchange with a routing key
+//    */
+//   protected async emit<T extends EventPayload>(
+//     exchange: string,
+//     routingKey: string,
+//     payload: T,
+//   ): Promise<boolean> {
+//     const event: RabbitMQEvent<T> = {
+//       event: routingKey,
+//       payload,
+//       metadata: {
+//         timestamp: Date.now(),
+//         correlationId: this.generateCorrelationId(),
+//         service: this.serviceName,
+//       },
+//     };
+
+//     return this.rabbitMQService.publish(exchange, routingKey, event);
+//   }
 
   /**
    * Schedule an event to be processed after a delay

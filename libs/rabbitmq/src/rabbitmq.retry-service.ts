@@ -16,7 +16,7 @@ export class RetryService {
   constructor(private readonly rabbitMQService: RabbitMQService) {}
 
   /**
-   * Execute a task with retry capability
+   * Execute a task with application layer manual retry capability
    */
   async executeWithRetry<T, R>(
     taskFn: (data: T) => Promise<R>,

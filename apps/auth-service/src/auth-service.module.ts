@@ -1,24 +1,21 @@
-// apps/auth-service/src/auth.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RabbitMQModule } from '@app/rabbitmq/rabbitmq.module';
-import { RedisCacheModule } from '@app/shared/utils/redis/redis-cache.module';
-import { UserProducer } from '@app/rabbitmq/producers/user.producer';
-import { WorkerService } from '@app/rabbitmq/worker.service';
+import { RedisCacheModule } from '@app/shared/cache/cache.module';
+import { UserProducer } from './producers/user.producer';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
 import { UserGrpcController } from './controllers/user.grpc.controller';
 import { AuthService } from './services/auth.service';
 import { UserService } from './services/user.service';
-import { User } from './domain/entities/user.entity';
-import { Role } from './domain/entities/role.entity';
-import { Permission } from './domain/entities/permission.entity';
-import { UserRepository } from './domain/repositories/user.repository';
-import { BackgroundJobsWorker } from './workers/background-jobs.worker';
-import { UserEventsHandler } from './workers/user-events.handler';
+import { User } from './entities/user.entity';
+// import { Role } from './domain/entities/role.entity';
+// import { Permission } from './domain/entities/permission.entity';
+import { UserRepository } from './repositories/user.repository';
+import { UserEventsHandler } from './consumers/user.consumer';
 import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
 
 @Module({
@@ -40,13 +37,13 @@ import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
         username: configService.get('POSTGRES_USER', 'postgres'),
         password: configService.get('POSTGRES_PASSWORD', 'postgres'),
         database: configService.get('POSTGRES_DB', 'auth_service'),
-        entities: [User, Role, Permission],
-        synchronize: configService.get<boolean>('DB_SYNC', false),
+        entities: [User /*Role, Permission*/],
+        synchronize: configService.get<boolean>('DB_SYNC', true),
       }),
     }),
 
     // Entity registration
-    TypeOrmModule.forFeature([User, Role, Permission]),
+    TypeOrmModule.forFeature([User /*Role, Permission*/]),
 
     // JWT setup for authentication
     JwtModule.registerAsync({
@@ -153,7 +150,6 @@ import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
     UserService,
     UserRepository,
     UserProducer,
-    BackgroundJobsWorker,
     UserEventsHandler,
     {
       provide: 'APP_NAME',

@@ -6,7 +6,7 @@ import {
   OrderCreatedEvent,
   OrderUpdatedEvent,
   OrderConfirmedEvent,
-} from '../interfaces/events.interface';
+} from '../interfaces';
 
 @Injectable()
 export class OrderProducer extends BaseProducer {
