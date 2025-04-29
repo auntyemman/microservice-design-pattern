@@ -3,8 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
-import { RabbitMQModule } from '@app/rabbitmq/rabbitmq.module';
-import { RedisCacheModule } from '@app/shared/cache/cache.module';
+import { RabbitMQModule } from '@app/rabbitmq';
+import { RedisCacheModule } from '@app/shared';
 import { UserProducer } from './producers/user.producer';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
@@ -15,8 +15,8 @@ import { User } from './entities/user.entity';
 // import { Role } from './domain/entities/role.entity';
 // import { Permission } from './domain/entities/permission.entity';
 import { UserRepository } from './repositories/user.repository';
-import { UserEventsHandler } from './consumers/user.consumer';
-import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
+import { UserConsumer } from './consumers/user.consumer';
+import { RABBITMQ, SERVICE_NAMES } from '@app/shared';
 
 @Module({
   imports: [
@@ -150,7 +150,7 @@ import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
     UserService,
     UserRepository,
     UserProducer,
-    UserEventsHandler,
+    UserConsumer,
     {
       provide: 'APP_NAME',
       useValue: SERVICE_NAMES.AUTH_SERVICE,

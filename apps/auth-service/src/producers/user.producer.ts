@@ -36,6 +36,7 @@ export class UserProducer extends BaseProducer {
    * a cron job or a fixed scheduder
    */
   async scheduleUserCleanup(data: { olderThanDays: number }): Promise<boolean> {
+    // trigger the submit job method of the base producer
     return this.submitJob(
       RABBITMQ.EXCHANGES.USER_EVENTS,
       RABBITMQ.ROUTING_KEYS.BACKGROUND_JOB,
