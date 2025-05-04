@@ -75,38 +75,38 @@ services:
       retries: 5
 
   # Microservices
-  # api-gateway:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/Dockerfile.api-gateway
-  #   container_name: api-gateway
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     NODE_ENV: development
-  #     AUTH_SERVICE_HOST: auth-service
-  #     AUTH_SERVICE_PORT: 3001
-  #     ORDER_SERVICE_HOST: order-service
-  #     ORDER_SERVICE_PORT: 3002
-  #     NOTIFICATION_SERVICE_HOST: notification-service
-  #     NOTIFICATION_SERVICE_PORT: 3003
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USERNAME: guest
-  #     RABBITMQ_PASSWORD: guest
-  #     REDIS_HOST: redis
-  #     REDIS_PORT: 6379
-  #   depends_on:
-  #     - auth-service
-  #     - order-service
-  #     - notification-service
-  #   networks:
-  #     - backend
-  #   volumes:
-  #     - ./apps/api-gateway:/app/apps/api-gateway
-  #     - ./libs:/app/libs
-  #     - /app/node_modules
-  #   command: npm run start:dev api-gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 3001
+      ORDER_SERVICE_HOST: order-service
+      ORDER_SERVICE_PORT: 3002
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: 3003
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - auth-service
+      # - order-service
+      # - notification-service
+    networks:
+      - backend
+    volumes:
+      - ./apps/api-gateway:/app/apps/api-gateway
+      - ./libs:/app/libs
+      - /app/node_modules
+    command: npm run start:api-gateway
 
   auth-service:
     build:
@@ -117,12 +117,12 @@ services:
       - "3001:3001"
     environment:
       NODE_ENV: development
-      DATABASE_TYPE: postgres
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_NAME: auth_service
+      AUTH_DATABASE_TYPE: postgres
+      AUTH_DATABASE_HOST: postgres
+      AUTH_DATABASE_PORT: 5432
+      AUTH_DATABASE_USER: postgres
+      AUTH_DATABASE_PASSWORD: postgres
+      AUTH_DATABASE_NAME: auth_service
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
@@ -139,7 +139,7 @@ services:
       - ./apps/auth-service:/app/apps/auth-service
       - ./libs:/app/libs
       - /app/node_modules
-    command: npm run start:dev auth-service
+    command: npm run start:auth-service
 
   # order-service:
   #   build:

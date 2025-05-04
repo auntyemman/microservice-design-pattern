@@ -1,13 +1,13 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { BaseProducer } from './base.producer';
+import { Injectable } from '@nestjs/common';
+import { BaseProducer } from '../abstracts/base.producer';
 import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
 import { EmailNotificationEvent, SmsNotificationEvent } from '../interfaces';
+import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
 export class NotificationProducer extends BaseProducer {
-  constructor(@Inject('RABBITMQ_CLIENT') client: ClientProxy) {
-    super(client, SERVICE_NAMES.NOTIFICATION_SERVICE);
+  constructor(private readonly rabbitMQservice: RabbitMQService) {
+    super(rabbitMQservice, SERVICE_NAMES.NOTIFICATION_SERVICE);
   }
 
   async emitSendEmailNotification(data: EmailNotificationEvent): Promise<void> {

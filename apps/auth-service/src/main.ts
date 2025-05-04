@@ -1,12 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { AuthServiceModule } from './auth-service.module';
+import { AuthModule } from './auth-service.module';
 import { ValidationPipe } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { GRPC } from '@app/shared';
 import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AuthServiceModule);
+  const app = await NestFactory.create(AuthModule);
 
   // Apply global pipes
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));

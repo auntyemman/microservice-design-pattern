@@ -1,17 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { BaseProducer } from './base.producer';
+import { Injectable } from '@nestjs/common';
+import { BaseProducer } from '../abstracts/base.producer';
 import { RABBITMQ, SERVICE_NAMES } from '@app/shared/constants';
 import {
   OrderCreatedEvent,
   OrderUpdatedEvent,
   OrderConfirmedEvent,
 } from '../interfaces';
+import { RabbitMQService } from '../rabbitmq.service';
 
 @Injectable()
 export class OrderProducer extends BaseProducer {
-  constructor(@Inject('RABBITMQ_CLIENT') client: ClientProxy) {
-    super(client, SERVICE_NAMES.ORDER_SERVICE);
+  constructor(private readonly rabbitMQservice: RabbitMQService) {
+    super(rabbitMQservice, SERVICE_NAMES.ORDER_SERVICE);
   }
 
   async emitOrderCreated(data: OrderCreatedEvent): Promise<void> {

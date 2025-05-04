@@ -13,7 +13,7 @@ COPY apps/auth-service ./apps/auth-service
 COPY libs ./libs
 
 # Install dependencies
-RUN npm install
+RUN npm install --omit=dev
 
 # Build only the required service
 RUN npm run build auth-service
@@ -25,14 +25,15 @@ WORKDIR /app
 
 # Copy only production dependencies
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # Copy only the built service
 COPY --from=builder /app/dist/apps/auth-service ./dist
+# COPY --from=builder /node_modules ./node_modules
 
 # Set environment variables
 ENV NODE_ENV=production
 
 EXPOSE 3001
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/app/auth-service/main.js"]

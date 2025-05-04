@@ -342,7 +342,7 @@ export class RabbitMQService implements OnModuleInit, OnApplicationShutdown {
 
         // Try to reconnect
         await this.setupDirectConnection();
-        await this.restoreConsumers();
+        // await this.restoreConsumers(); 
 
         reconnected = true;
         this.logger.log('Successfully reconnected to RabbitMQ');

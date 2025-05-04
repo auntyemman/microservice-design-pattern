@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RabbitMQModule } from '@app/rabbitmq';
-import { RedisCacheModule } from '@app/shared';
+import { CacheModule } from '@app/shared';
 import { UserProducer } from './producers/user.producer';
 import { UserController } from './controllers/user.controller';
 import { AuthController } from './controllers/auth.controller';
@@ -56,7 +56,7 @@ import { RABBITMQ, SERVICE_NAMES } from '@app/shared';
     }),
 
     // Redis cache setup (shared across services)
-    RedisCacheModule.register(),
+    CacheModule.register(),
 
     // Scheduled module
     ScheduleModule.forRoot(),

@@ -25,9 +25,10 @@ export class AuthService {
     // Emit user created event
     await this.userProducer.userCreated({
       id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
-      username: user.username,
-      createdAt: user.createdAt,
+      createdAt: user.createdAt.toISOString(),
     });
 
     return user;
@@ -44,9 +45,10 @@ export class AuthService {
     // Emit user updated event
     await this.userProducer.userUpdated({
       id: updatedUser.id,
-      email: userData.email,
-      username: userData.username,
-      updatedAt: updatedUser.updatedAt,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      updatedAt: updatedUser.updatedAt.toISOString(),
     });
 
     return updatedUser;
