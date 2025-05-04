@@ -62,8 +62,8 @@ services:
       - "5672:5672"   # AMQP protocol
       - "15672:15672" # Management UI
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -139,7 +139,7 @@ services:
       - ./apps/auth-service:/app/apps/auth-service
       - ./libs:/app/libs
       - /app/node_modules
-    command: npm run start:auth-service
+    command: node dist/app/auth-service/main.js
 
   # order-service:
   #   build:

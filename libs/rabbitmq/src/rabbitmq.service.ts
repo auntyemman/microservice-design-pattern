@@ -265,7 +265,9 @@ export class RabbitMQService implements OnModuleInit, OnApplicationShutdown {
     options: { noAck?: boolean; maxRetries?: number } = {},
   ): Promise<void> {
     this.ensureInitialized();
-
+    // Set default noAck to false (meaning we will manually acknowledge)
+    const consumeOptions = { noAck: options.noAck ?? false };
+    
     const consumerTag = (
       await this.channel.consume(
         queue,
@@ -276,36 +278,40 @@ export class RabbitMQService implements OnModuleInit, OnApplicationShutdown {
             const content = JSON.parse(msg.content.toString());
             await handler(content);
 
-            if (!options.noAck) {
+            if (!consumeOptions.noAck) {
               this.channel.ack(msg);
             }
           } catch (error) {
             this.logger.error(`Error processing message from ${queue}:`, error);
 
-            // Handle retries with exponential backoff
-            const maxRetries = options.maxRetries || 3;
-            const retryCount = (msg.properties.headers?.retryCount || 0) + 1;
+            // Only handle retries if noAck is false
+            if (!consumeOptions.noAck) {
+              // Handle retries with exponential backoff
+              const maxRetries = options.maxRetries || 3;
+              const headers = msg.properties.headers || {};
+              const retryCount = (headers.retryCount || 0) + 1;
 
-            if (retryCount <= maxRetries) {
-              // Delay retry with exponential backoff
-              const delay = Math.pow(2, retryCount) * 1000;
+              if (retryCount <= maxRetries) {
+                // Delay retry with exponential backoff
+                const delay = Math.pow(2, retryCount) * 1000;
 
-              // Publish to retry exchange
-              await this.publishWithDelay(
-                RABBITMQ.EXCHANGES.RETRY,
-                msg.fields.routingKey,
-                JSON.parse(msg.content.toString()),
-                delay,
-              );
+                // Publish to retry exchange
+                await this.publishWithDelay(
+                  RABBITMQ.EXCHANGES.RETRY,
+                  msg.fields.routingKey,
+                  JSON.parse(msg.content.toString()),
+                  delay,
+                );
 
-              this.channel.ack(msg);
-              this.logger.debug(
-                `Message requeued for retry ${retryCount}/${maxRetries} with delay ${delay}ms`,
-              );
-            } else {
-              // Message has been retried too many times, dead-letter it
-              this.channel.nack(msg, false, false);
-              this.logger.warn(`Message exceeded max retries: ${maxRetries}`);
+                this.channel.ack(msg);
+                this.logger.debug(
+                  `Message requeued for retry ${retryCount}/${maxRetries} with delay ${delay}ms`,
+                );
+              } else {
+                // Message has been retried too many times, dead-letter it
+                this.channel.nack(msg, false, false);
+                this.logger.warn(`Message exceeded max retries: ${maxRetries}`);
+              }
             }
           }
         },

@@ -11,5 +11,5 @@ export class UserRepository extends PostgresBaseRepository<User> {
     private readonly userRepository: Repository<User>,
   ) {
     super(userRepository);
-  }
+  } 
 }

@@ -19,7 +19,7 @@ export class RabbitMQModule {
             options: {
               urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
               queue: `${name}_queue`,
-              noAck: false,
+              noAck: true,
               persistent: true,
               queueOptions: {
                 durable: true,
