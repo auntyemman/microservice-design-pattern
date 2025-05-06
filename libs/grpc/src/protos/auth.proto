@@ -11,7 +11,7 @@ service AuthService {
 }
 
 message ValidateTokenRequest {
-  string token = 1;
+  string token = 1; 
 }
 
 message ValidateTokenResponse {
