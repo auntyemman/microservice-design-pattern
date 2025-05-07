@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  nestjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: secure-nestjs-app:latest
+    container_name: secure-nestjs-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount specific writable directories instead of making the entire filesystem writable
+      - nestjs-logs:/home/nestjs/app/logs
+      - nestjs-uploads:/home/nestjs/app/uploads
+      - nestjs-temp:/home/nestjs/app/temp
+    
+    # Security enhancements
+    read_only: true  # Make the root filesystem read-only (Sysdig #16)
+    tmpfs:
+      - /tmp:size=128M  # Provide writable /tmp for temporary files
+    
+    security_opt:
+      - no-new-privileges:true  # Prevent privilege escalation (Sysdig #14)
+      - seccomp:seccomp-profile.json  # Apply seccomp profile (Sysdig #18)
+    
+    cap_drop:
+      - ALL  # Drop all capabilities by default (Sysdig #8)
+    
+    cap_add:
+      - NET_BIND_SERVICE  # Only add capabilities that are needed
+    
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Add other environment variables as needed
+      - LOG_LEVEL=info
+      - UPLOAD_DIR=/home/nestjs/app/uploads
+    
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Healthcheck (Sysdig #20)
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+# Define named volumes for persistent storage with proper permissions
+volumes:
+  nestjs-logs:
+    driver: local
+  nestjs-uploads:
+    driver: local
+  nestjs-temp:
+    driver: local

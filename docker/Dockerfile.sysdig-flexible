@@ -1,0 +1,74 @@
+# Stage 1: Build stage
+FROM node:18-alpine AS builder
+
+# Use non-root user for security (Sysdig #1: Run as non-root)
+RUN addgroup -S nestjs && adduser -S nestjs -G nestjs
+USER nestjs
+
+# Set working directory
+WORKDIR /home/nestjs/app
+
+# Copy package files first to leverage caching
+COPY --chown=nestjs:nestjs package*.json ./
+# you can copy other writable directories here if you want to continue the local content in the container
+
+# Install dependencies with clear separation of dev vs prod
+RUN npm ci && \
+    npm cache clean --force
+
+# Copy application source with correct ownership
+COPY --chown=nestjs:nestjs . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Production stage (Sysdig #7: Use multi-stage builds)
+FROM node:18-alpine AS production
+
+# Set environment variables (Sysdig #11: Set environment variables correctly)
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Add container security labels (Sysdig #19: Add metadata labels)
+LABEL maintainer="devops@example.com" \
+      description="Secure NestJS application" \
+      version="1.0.0" \
+      vendor="Example Inc."
+
+# Use non-root user (Sysdig #1: Run as non-root)
+RUN addgroup -S nestjs && adduser -S nestjs -G nestjs
+
+# Create app directory and necessary writable directories
+WORKDIR /home/nestjs/app
+# Run if you want new writable directories and content in the container, that means you dont need to copy from the builder
+RUN mkdir -p /home/nestjs/app/logs /home/nestjs/app/uploads /home/nestjs/app/temp
+
+# Update and install security updates (Sysdig #5: Update packages)
+# Include a minimal set of troubleshooting tools
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache curl busybox-extras && \
+    rm -rf /var/cache/apk/*
+
+# Copy only necessary files from builder (Sysdig #7: Multi-stage builds)
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/dist ./dist
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/package*.json ./
+
+# Set proper ownership for writable directories
+RUN chown -R nestjs:nestjs /home/nestjs/app/logs /home/nestjs/app/uploads /home/nestjs/app/temp && \
+    chmod 755 /home/nestjs/app/logs /home/nestjs/app/uploads /home/nestjs/app/temp
+
+# Set strict permissions (Sysdig #8: Restrict capabilities)
+USER nestjs
+
+# Health check (Sysdig #20: Add health checks)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Expose only necessary port (Sysdig #9: Only expose needed ports)
+EXPOSE ${PORT}
+
+# Define command to run app (Sysdig #10: Use ENTRYPOINT with CMD)
+ENTRYPOINT ["node"]
+CMD ["dist/main"]

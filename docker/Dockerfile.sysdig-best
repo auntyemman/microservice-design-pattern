@@ -1,0 +1,79 @@
+# follow the sysdig top 20 best practices
+# Limitations includes if your app requires writing operations like local file uploads, logs and temp files. check the sysdig flexible for workaround
+#  For readonly containers
+
+# Stage 1: Build stage
+FROM node:18-alpine AS builder
+
+# Use non-root user for security (Sysdig #1: Run as non-root)
+RUN addgroup -S nestjs && adduser -S nestjs -G nestjs
+USER nestjs
+
+# Set working directory
+WORKDIR /home/nestjs/app
+
+# Copy package files first to leverage caching
+COPY --chown=nestjs:nestjs package*.json ./
+
+# Only install production dependencies (Sysdig #13: Remove build tools)
+RUN npm ci --only=production && \
+    # Remove npm cache to reduce image size (Sysdig #13: Clean up)
+    npm cache clean --force
+
+# Copy application source with correct ownership
+COPY --chown=nestjs:nestjs . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Production stage (Sysdig #7: Use multi-stage builds)
+FROM node:18-alpine AS production
+
+# Set environment variables (Sysdig #11: Set environment variables correctly)
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Add container security labels (Sysdig #19: Add metadata labels)
+LABEL maintainer="devops@example.com" \
+      description="Secure NestJS application" \
+      version="1.0.0" \
+      vendor="Example Inc."
+
+# Use non-root user (Sysdig #1: Run as non-root)
+RUN addgroup -S nestjs && adduser -S nestjs -G nestjs
+
+# Create app directory with correct permissions
+WORKDIR /home/nestjs/app
+
+# Update and install security updates (Sysdig #5: Update packages)
+RUN apk update && \
+    apk upgrade && \
+    # Remove package manager cache (Sysdig #13: Clean up)
+    rm -rf /var/cache/apk/*
+
+# Copy only necessary files from builder (Sysdig #7: Multi-stage builds)
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/dist ./dist
+COPY --from=builder --chown=nestjs:nestjs /home/nestjs/app/package*.json ./
+
+# Set filesystem to read-only where possible (Sysdig #16: Use read-only filesystems)
+# Will be applied with --read-only flag at runtime
+
+# Set strict permissions (Sysdig #8: Restrict capabilities)
+USER nestjs
+
+# Health check (Sysdig #20: Add health checks)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Expose only necessary port (Sysdig #9: Only expose needed ports)
+EXPOSE ${PORT}
+
+# Define command to run app (Sysdig #10: Use ENTRYPOINT with CMD)
+ENTRYPOINT ["node"]
+CMD ["dist/main"]
+
+# How to run the container with additional security options:
+# docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE --read-only \
+#   --security-opt=no-new-privileges --tmpfs /tmp \
+#   -p 3000:3000 your-nestjs-image
